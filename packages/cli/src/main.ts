@@ -39,5 +39,4 @@ node.forEachChild(child => {
   }
 });
 
-// console.log(node);
 

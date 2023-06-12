@@ -1,0 +1,36 @@
+[
+  {
+    "name": "ExampleController",
+    "requests": [
+      {
+        "name": "create",
+        "type": "Post",
+        "path": "http:/localhost:5000/example/"
+      },
+      {
+        "name": "findAll",
+        "type": "Get",
+        "path": "http:/localhost:5000/example/"
+      },
+      {
+        "name": "findOne",
+        "type": "Get",
+        "path": "http:/localhost:5000/example/:id"
+      },
+      {
+        "name": "update",
+        "type": "Patch",
+        "path": "http:/localhost:5000/example/:id"
+      },
+      {
+        "name": "remove",
+        "type": "Delete",
+        "path": "http:/localhost:5000/example/:id"
+      }
+    ]
+  },
+  {
+    "name": "ParserController",
+    "requests": []
+  }
+]
