@@ -1,11 +1,17 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
     "target": "esnext",
-    "sourceMap": true,
-    "esModuleInterop": true
+    "module": "commonjs",
+    "declaration": true,
+    "outDir": "./lib",
+    "rootDir": ".",
+    "types": ["node"],
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "noImplicitAny": false
   },
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["./src/**/*.ts", "package.json"]
 }

@@ -8,10 +8,12 @@ import * as ts from "typescript";
 export class ParserService implements OnApplicationBootstrap {
   // Run Code
   public onApplicationBootstrap(): any {
-    const rootDirectory: string = "./src";
+    const rootDirectory: string = "../demo/src";
 
     const result = this.getAllRoutesExport(rootDirectory, "http://localhost:5000");
-    console.log(JSON.stringify(result, null, 2));
+    const postman = this.getPostman(result);
+
+    console.log(JSON.stringify(postman, null, 2));
   }
 
   public getMethodNames(filename: string) {
@@ -206,4 +208,39 @@ export class ParserService implements OnApplicationBootstrap {
     return result;
   }
 
+  // Postman Support
+  public getPostman(api: any[]) {
+
+    return {
+      info: {
+        "_postman_id": "db4f37b3-d6e9-476b-baf6-0ca3b2819ac6",
+        "name": "Appie Demo",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+      },
+      item: api.map((controller) => {
+        return {
+          name: controller.name,
+          item: controller.requests.map((request) => {
+            const url = new URL(request.path);
+
+            return {
+              name: request.name,
+              request: {
+                method: request.type.toUpperCase(),
+                header: [],
+                url: {
+                  raw: request.path,
+                  protocol: url.protocol.replaceAll(":", ""),
+                  host: url.hostname.split("."),
+                  port: url.port,
+                  path: url.pathname.split("/").filter(p => p !== ""),
+                },
+              },
+              response: [],
+            };
+          })
+        };
+      }),
+    };
+  }
 }
