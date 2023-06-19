@@ -11,7 +11,9 @@ type ObjType = {
 // Variables
 const a = "example";
 
-const b: string | number = "example";
+let b: string | number = a === "example" ? "example" : 3;
+
+let x = b;
 
 const c: StringType = "";
 
@@ -29,4 +31,10 @@ const e: {a: string, b: {a: StringType, b: ObjType}} = {
         c: "",
       }}},
 }
+
+const f: {a: string}[] = [];
+
+const g: Omit<ObjType, "a"> = {
+  b: {c: ""}
+};
 

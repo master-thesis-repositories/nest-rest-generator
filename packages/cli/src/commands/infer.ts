@@ -1,4 +1,5 @@
 import * as ts from "typescript";
+import * as fs from "fs";
 
 
 function typeToJson(program: any, typeNode: ts.TypeNode | undefined): any {
@@ -29,6 +30,33 @@ function typeToJson(program: any, typeNode: ts.TypeNode | undefined): any {
   return typeChecker.typeToString(type);
 }
 
+const resolveSymbol = (symbol: ts.Symbol) => {
+  console.log(symbol.members);
+  // symbol.
+
+  return "";
+}
+
+// function resolveTypeProperties(typeChecker: ts.TypeChecker, type: ts.Type): object {
+//   const properties: { [key: string]: any } = {};
+//
+//   typeChecker.getPropertiesOfType(type).forEach(property => {
+//     const propertyName = property.getName();
+//
+//     // Get the type of the property
+//     const propertyType = typeChecker.getTypeOfSymbolAtLocation(property, node);
+//
+//     // Recursively resolve nested object types
+//     if (propertyType.symbol && propertyType.symbol.members) {
+//       properties[propertyName] = resolveTypeProperties(propertyType);
+//     } else {
+//       properties[propertyName] = typeChecker.typeToString(propertyType);
+//     }
+//   });
+//
+//   return properties;
+// }
+
 
 export const inferVars = () => {
 
@@ -37,6 +65,7 @@ export const inferVars = () => {
   const typeChecker = program.getTypeChecker();
   const sourceFile = program.getSourceFile(filename)!;
 
+  // const types: ts.Type[] = [];
 
   // Source
   if (sourceFile) {
@@ -60,6 +89,7 @@ export const inferVars = () => {
                   // Identifier
                   if (ts.isIdentifier(node)) {
                     const symbol = typeChecker.getSymbolAtLocation(node);
+
                     console.log(node.getText(sourceFile));
                     // console.log(symbol);
                     // console.log(node);
@@ -68,7 +98,78 @@ export const inferVars = () => {
                       // console.log(symbol);
                       // console.log();
                       const type = typeChecker.getTypeOfSymbolAtLocation(symbol, symbol.valueDeclaration!);
-                      const typeNode = typeChecker.typeToTypeNode(type, undefined, undefined);
+
+                      const resolve = (type: ts.Type) => {
+                        const properties: {[key: string]: any} = {};
+
+                        typeChecker.getPropertiesOfType(type).forEach(prop => {
+                          const name = prop.getName();
+                          const propType = typeChecker.getTypeOfSymbolAtLocation(prop, prop.valueDeclaration!);
+
+                          if (propType?.symbol?.members) {
+                            properties[name] = resolve(propType);
+                          }
+                          else {
+                            properties[name] = typeChecker.typeToString(propType);
+                          }
+                        });
+
+                        return properties;
+                      }
+
+                      const resolveTypeDefinition = (type: ts.Type) => {
+                        if (type.isUnion()) {
+                          return type.types.map(resolveTypeDefinition);
+                        }
+
+                        if (type.isIntersection()) {
+                          return type.types.reduce((acc: any, curr: ts.Type) => {
+                            return Object.assign(acc, resolveTypeDefinition(curr));
+                          }, {});
+                        }
+
+                        if (type.symbol) {
+                          const properties: { [key: string]: any } = {};
+
+                          typeChecker.getPropertiesOfType(type).forEach(property => {
+                            const propertyName = property.getName();
+                            const propertyType = typeChecker.getTypeOfSymbolAtLocation(property, node);
+                            properties[propertyName] = resolveTypeDefinition(propertyType);
+                          });
+
+                          return properties;
+                        }
+
+                        return typeChecker.typeToString(type);
+                      }
+
+                      // console.log(JSON.stringify(resolveTypeDefinition(type), null, 2));
+
+                      console.log("1", typeChecker.typeToString(type), "\n");
+                      //
+                      // if (type.symbol) {
+                      //   // @ts-ignore
+                      //   // delete type.symbol.checker;
+                      //   //
+                      //   // console.log(type.symbol);
+                      //
+                      //   const sType = typeChecker.getTypeOfSymbolAtLocation(type.symbol, type.symbol.valueDeclaration!);
+                      //   console.log("2", typeChecker.typeToString(sType));
+                      // }
+                      // console.log("");
+                      //
+                      // if (type.aliasSymbol) {
+                      //   // @ts-ignore
+                      //   // delete type.symbol.checker;
+                      //   //
+                      //   // console.log(type.symbol);
+                      //
+                      //   const sType = typeChecker.getTypeOfSymbolAtLocation(type.aliasSymbol, type.aliasSymbol.valueDeclaration!);
+                      //   console.log("2", typeChecker.typeToString(sType));
+                      // }
+                      // console.log("");
+
+
                       // console.log(type);
                       // console.log(typeToJson(program, typeNode));
 
@@ -77,10 +178,33 @@ export const inferVars = () => {
                       // console.log(JSON.stringify(symbolJson, null, 2));
                       // console.log(type.symbol);
 
-                      console.log(typeChecker.typeToString(type));
+                      // if (type.symbol) {
+                      //   console.log("resolve");
+                      //   console.log(resolveSymbol(type.symbol));
+                      // }
+                      //
+                      // console.log("literal", type.isLiteral());
+                      // console.log("alias", !!type.aliasSymbol);
+                      // console.log("symbol", !!type.symbol, type.isClassOrInterface());
+                      // console.log(typeChecker.typeToString(type));
+                      // console.log("\n");
                       // console.log(`Variable ${node.text} has type: ${typeChecker.typeToString(type)}`);
+
+
+                      // if (type.isUnion()) {
+                      //   console.log("Union");
+                      // }
+                      //
+                      // if (type.isIntersection()) {
+                      //   console.log("Intersection");
+                      // }
+                      //
+                      // console.log((type as any).value);
+                      // console.log((type as any).types);
+                      // console.log((type as any).intrinsicName);
+                      // console.log((type as any).symbol);
+                      // console.log((type as any).symbolAlias);
                     }
-                    console.log();
                   }
                 })
               }
@@ -105,6 +229,7 @@ export const inferVars = () => {
     });
   }
 
+  // console.log(types);
 }
 
 export const inferVars2 = () => {
