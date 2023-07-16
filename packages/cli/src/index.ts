@@ -1,6 +1,6 @@
 #!/usr/bin/env node
+import {extract2} from "./commands/extract";
 import {generatePostman} from "./commands/generate_rest_api";
-import {inferVars} from "./commands/infer";
 import {Cli} from "./core/cli";
 import {version} from "./core/config";
 
@@ -25,7 +25,8 @@ Cli.program
 .command("infer")
 .description("infer testing")
 .action(() => {
-  inferVars();
+  // inferVars();
+  extract2();
 });
 
 Cli.start();

@@ -1,20 +1,26 @@
-import {Controller, Get, Post} from '@nestjs/common';
-import { AppService } from './app.service';
+import {Body, Controller, Get, Inject, Param, Post} from '@nestjs/common';
+import {AppService} from './app.service';
+
 
 @Controller("app")
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  @Inject(AppService)
+  private readonly appService: AppService;
 
+
+  // Methods
   @Get("/")
-  public getHello(): string {
-    return this.appService.getHello();
+  public getExample() {
+    return this.appService.getExample();
   }
 
   @Get("/:id")
-  public getHelloById() {}
+  public getExampleById(@Param() id: string) {
+    return this.appService.getExampleById(id);
+  }
 
   @Post("/")
-  public postHello() {
-
+  public createExample(@Body() body: { example: string }) {
+    return this.appService.createExample(body);
   }
 }

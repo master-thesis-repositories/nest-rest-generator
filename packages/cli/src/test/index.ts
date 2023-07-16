@@ -1,6 +1,7 @@
 
 // Types
 type StringType = string;
+
 type ObjType = {
   a: string;
   b: {
