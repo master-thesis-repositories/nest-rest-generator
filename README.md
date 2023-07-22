@@ -2,4 +2,4 @@
 A tool to generate a REST client for NestJs.
 
 # Architecture
-![img.png](assets/architecture.png)
+![img.png](assets/architecture-overview.png)
