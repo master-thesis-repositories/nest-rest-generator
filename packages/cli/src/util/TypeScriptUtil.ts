@@ -7,8 +7,8 @@ type Project = ReturnType<typeof TypeScriptUtil.getProject>;
 class TypeScriptUtil {
 
   // Project
-  public static getProject(filename: string) {
-    const program = ts.createProgram([filename], {});
+  public static getProject(filename: string, files: string[] = []) {
+    const program = ts.createProgram([filename, ...files], {declaration: true, declarationMap: true});
     const typeChecker = program.getTypeChecker();
     const sourceFile = program.getSourceFile(filename)!;
 
@@ -57,21 +57,66 @@ class TypeScriptUtil {
     });
   }
 
-  // NestJs
-  // public static findClass(root: ts.Node) {
-  //   const visit = (node: ts.Node) => {
-  //     callback(node);
-  //     ts.forEachChild(node, visit);
-  //   }
-  //
-  //   ts.forEachChild(root, visit);
-  //
-  // }
+  // Getters
+  public static getParameters(node: ts.Node, sourceFile: ts.SourceFile, typeChecker: ts.TypeChecker) {
+    const parameters: any[] = [];
 
-  // Type Extraction
+    node.forEachChild(node => {
+      if (ts.isParameter(node)) {
+        parameters.push({
+          node,
+          type: this.getType(typeChecker, node),
+          decorators: this.getDecorators(node, sourceFile),
+        });
+      }
+    });
 
+    return parameters;
+  }
 
+  public static getDecorators(node: ts.Node, source: ts.SourceFile) {
+    const parameters: any[] = [];
 
+    node.forEachChild(node => {
+      if (ts.isDecorator(node)) {
+        parameters.push({
+          node: node,
+          name: node.getChildAt(1).getChildAt(0).getText(source),
+          parameter: node.getChildAt(1).getChildAt(2).getText(source),
+        });
+      }
+    });
+
+    return parameters;
+  }
+
+  // Name
+  public static getName(node: ts.DeclarationStatement | ts.PropertyDeclaration, source: ts.SourceFile) {
+    return node.name?.getText(source);
+  }
+
+  // Types
+  public static getType(typeChecker: ts.TypeChecker, node: ts.Node) {
+    return typeChecker.getTypeAtLocation(node);
+  }
+
+  public static getReturnType(typeChecker: ts.TypeChecker, node: ts.SignatureDeclaration) {
+    const signature = typeChecker.getSignatureFromDeclaration(node)!;
+    return typeChecker.getReturnTypeOfSignature(signature);
+  }
+
+  public static getTypeDeclaration(type: ts.Type) {
+    if (type.aliasSymbol) {
+      const decl = type.aliasSymbol.getDeclarations()![0];
+      const src = decl.getSourceFile();
+
+      return decl.getText(src);
+    }
+  }
+
+  public static getTypeString(typeChecker: ts.TypeChecker, type: ts.Type) {
+    return typeChecker.typeToString(type);
+  }
 }
 
 export default TypeScriptUtil;

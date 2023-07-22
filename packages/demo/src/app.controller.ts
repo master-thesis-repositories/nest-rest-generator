@@ -2,6 +2,11 @@ import {Body, Controller, Get, Inject, Param, Post} from '@nestjs/common';
 import {AppService} from './app.service';
 
 
+type ExampleLocal = {
+  example: string;
+  test: number;
+}
+
 @Controller("app")
 export class AppController {
   @Inject(AppService)
@@ -15,7 +20,7 @@ export class AppController {
   }
 
   @Get("/:id")
-  public getExampleById(@Param() id: string) {
+  public getExampleById(@Param("id") id: string) {
     return this.appService.getExampleById(id);
   }
 

@@ -3,6 +3,11 @@
 .vscode
 .fleet
 
+# ignore
+packages/testing
+packages/cli/lib
+node_modules
+
 # Logs
 logs
 *.log

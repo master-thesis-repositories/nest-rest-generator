@@ -3,6 +3,7 @@ import {Injectable} from '@nestjs/common';
 
 export type Example = {
   example: string;
+  test: number;
 };
 
 
@@ -11,6 +12,7 @@ export class AppService {
   public getExample() {
     const example: Example = {
       example: "example",
+      test: 0,
     };
 
     return example;
@@ -22,7 +24,7 @@ export class AppService {
     };
   }
 
-  public createExample(data: Example) {
+  public createExample(data: any) {
     console.log(data);
   }
 }

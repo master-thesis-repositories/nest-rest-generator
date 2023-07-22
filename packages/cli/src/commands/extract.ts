@@ -72,30 +72,62 @@ export const extract = () => {
 }
 
 
+function resolveAliasTypes(typeChecker: ts.TypeChecker, type: ts.Type, visited: Set<ts.Type> = new Set()): string {
+  if (visited.has(type)) {
+    return 'Circular reference';
+  }
+
+  visited.add(type);
+
+  const a = type.aliasSymbol;
+  if (type.aliasSymbol) {
+    // console.log(type.aliasSymbol);
+    const t = type.aliasSymbol.getDeclarations()?.at(0)!;
+    const tt = typeChecker.getTypeAtLocation(t);
+    const s = tt.symbol;
+
+    // console.log("symbol:", s);
+    const ttt = typeChecker.getTypeOfSymbolAtLocation(a!, a!.valueDeclaration!);
+
+    console.log("ttt", typeChecker.typeToString(ttt));
+
+    const aliasedType = typeChecker.getDeclaredTypeOfSymbol(type.symbol);
+    return resolveAliasTypes(typeChecker, aliasedType, visited);
+  }
+
+  return typeChecker.typeToString(type);
+}
+
+
 export const extract2 = () => {
+  // , ["../demo/src/app.service.ts"]
   const project = TypeScriptUtil.getProject("../demo/src/app.controller.ts");
 
 
   TypeScriptUtil.forEachNode(project.sourceFile, (node) => {
 
     if (ts.isClassDeclaration(node)) {
-      console.log("class", node.name?.getText(project.sourceFile));
-      node.forEachChild(child => {
-        if (ts.isDecorator(child)) {
-          console.log("  decorator", child.getChildAt(1).getChildAt(0).getText(project.sourceFile));
-          console.log("  decorator (value)", child.getChildAt(1).getChildAt(2).getText(project.sourceFile));
-        }
-      });
+      console.log("class", TypeScriptUtil.getName(node, project.sourceFile));
+
+      // const decorators = TypeScriptUtil.getDecorators(node);
+      // for (const decorator of decorators) {
+      //   console.log("", "decorator",
+      //     TypeScriptUtil.getDecoratorName(decorator, project.sourceFile),
+      //     TypeScriptUtil.getDecoratorParameter(decorator, project.sourceFile),
+      //   );
+      // }
     }
 
     if (ts.isPropertyDeclaration(node)) {
-      console.log("property", node.name.getText(project.sourceFile));
-      node.forEachChild(child => {
-        if (ts.isDecorator(child)) {
-          console.log("  decorator", child.getChildAt(1).getChildAt(0).getText(project.sourceFile));
-          console.log("  decorator (value)", child.getChildAt(1).getChildAt(2).getText(project.sourceFile));
-        }
-      });
+      console.log("property", TypeScriptUtil.getName(node, project.sourceFile));
+
+      // const decorators = TypeScriptUtil.getDecorators(node);
+      // for (const decorator of decorators) {
+      //   console.log("", "decorator",
+      //     TypeScriptUtil.getDecoratorName(decorator, project.sourceFile),
+      //     TypeScriptUtil.getDecoratorParameter(decorator, project.sourceFile)
+      //   );
+      // }
     }
 
     if (ts.isMethodDeclaration(node)) {
@@ -104,12 +136,30 @@ export const extract2 = () => {
 
       const signature = project.typeChecker.getSignatureFromDeclaration(node)!;
       const type = project.typeChecker.getReturnTypeOfSignature(signature);
+
+      if (type.aliasSymbol) {
+        const decl = type.aliasSymbol.getDeclarations()![0];
+        const src = decl.getSourceFile();
+        console.log(type.aliasSymbol.getDeclarations()?.length);
+
+        console.log(decl.getText(src));
+      }
+
+      // if (type.symbol) {
+      //   const decl = type.symbol.getDeclarations()![0];
+      //   console.log(decl);
+      //
+      //   console.log(decl.getText(project.sourceFile));
+      // }
+
       console.log(project.typeChecker.typeToString(type));
 
       node.forEachChild(child => {
         if (ts.isDecorator(child)) {
-          console.log("  decorator", child.getChildAt(1).getChildAt(0).getText(project.sourceFile));
-          console.log("  decorator (value)", child.getChildAt(1).getChildAt(2).getText(project.sourceFile));
+          // console.log("", "decorator",
+          //   TypeScriptUtil.getDecoratorName(child, project.sourceFile),
+          //   TypeScriptUtil.getDecoratorParameter(child, project.sourceFile)
+          // );
         }
 
         if (ts.isParameter(child)) {
@@ -117,10 +167,10 @@ export const extract2 = () => {
 
           child.forEachChild(child2 => {
             if (ts.isDecorator(child2)) {
-              console.log("      decorator", child2.getChildAt(1).getChildAt(0).getText(project.sourceFile));
-              console.log("      decorator (value)", child2.getChildAt(1).getChildAt(2).getText(project.sourceFile));
-
-              console.log(child.getChildAt(3).getText(project.sourceFile));
+              // console.log("", "", "decorator",
+              //   TypeScriptUtil.getDecoratorName(child2, project.sourceFile),
+              //   TypeScriptUtil.getDecoratorParameter(child2, project.sourceFile)
+              // );
 
               const type = project.typeChecker.getTypeAtLocation(child);
               console.log(project.typeChecker.typeToString(type));
@@ -132,3 +182,4 @@ export const extract2 = () => {
 
   });
 }
+

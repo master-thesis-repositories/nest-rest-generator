@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as ts from "typescript";
+import TypeScriptUtil from "../util/TypeScriptUtil";
 
 
 // Methods
@@ -61,8 +62,8 @@ const getDecoratorValues = (decorator: ts.Decorator): string[] => {
 
 // Routes
 const getRoutes = (filename: string) => {
-  const file = fs.readFileSync(filename, "utf-8");
-  const sourceFile = ts.createSourceFile("methods.ts", file, ts.ScriptTarget.Latest);
+  const project = TypeScriptUtil.getProject(filename);
+  const sourceFile = project.sourceFile;
 
   const controller = {
     name: "",
@@ -100,7 +101,18 @@ const getRoutes = (filename: string) => {
         path: "",
         params: [],
         body: false,
+        bodyType: "",
+        bodyDecls: "",
+        returnType: "",
+        returnDecls: ""
       };
+
+      const type = TypeScriptUtil.getReturnType(project.typeChecker, node);
+      const typeString = TypeScriptUtil.getTypeString(project.typeChecker, type);
+      const typeDecl = TypeScriptUtil.getTypeDeclaration(type) || "";
+
+      method.returnType = typeString;
+      method.returnDecls = typeDecl;
 
       const methodName = node.name.getText(sourceFile);
 
@@ -112,13 +124,24 @@ const getRoutes = (filename: string) => {
               const decoratorName = pChild.expression.expression.escapedText;
               const params = getDecoratorValues(pChild);
 
+              const type = TypeScriptUtil.getType(project.typeChecker, child);
+              const typeString = TypeScriptUtil.getTypeString(project.typeChecker, type);
+              const typeDecl = TypeScriptUtil.getTypeDeclaration(type) || "";
+
               if (decoratorName === "Param") {
                 const param = params.length > 0 ? params[0] : "unknown";
-                method.params.push(param);
+
+                method.params.push({
+                  param: param,
+                  paramType: typeString,
+                  paramDecls: typeDecl,
+                });
               }
 
               if (decoratorName === "Body") {
                 method.body = true;
+                method.bodyType = typeString;
+                method.bodyDecls = typeDecl;
               }
             }
           });
@@ -166,8 +189,7 @@ const getAllRoutes = (rootDirectory: string) => {
 
       if (stats.isDirectory()) {
         readDirectoryRecursive(fullPath); // Recursively read subdirectories
-      }
-      else if (stats.isFile() && entry.endsWith(".controller.ts")) {
+      } else if (stats.isFile() && entry.endsWith(".controller.ts")) {
         files.push(fullPath);
       }
     });
@@ -189,6 +211,7 @@ const getAllRoutesExport = (rootDirectory: string, base: string) => {
       name: route.controller.name,
       requests: route.methods.map((method) => {
         return {
+          ...method,
           name: method.name,
           type: method.method,
           path: (base + "/" + route.controller.path + "/" + method.path).replaceAll("//", "/"),
@@ -239,6 +262,44 @@ const getPostman = (api: any[]) => {
 }
 
 // Generators
+// "name": "getExample",
+// "method": "Get",
+// "path": "http:/localhost:5000/app/",
+// "params": [],
+// "body": false,
+// "bodyType": "",
+// "bodyDecls": "",
+// "returnType": "ExampleLocal",
+// "returnDecls": "type ExampleLocal = {\n  example: StringType;\n  test: number;\n}",
+// "type": "Get"
+
+const methodTemplate = (options: any) => {
+
+  return `
+${options.returnDecls}
+${options.bodyDecls}
+${options.params.map(param => param.paramDecls).join("\n")}
+
+const ${options.name} = async (body?: ${options.bodyType || "any"}, params?: {${options.params.map(param => `${param.param}: ${param.paramType}`)}}): Promise<${options.returnType}> => {
+  const response = await fetch("${options.path}", {
+    method: "${options.method.toUpperCase()}",
+    body: JSON.stringify(body),
+  });
+  
+  return await response.json();
+};`
+};
+
+export const generateClientApi = () => {
+  const rootDirectory: string = ".";
+
+  const result = getAllRoutesExport(rootDirectory, "http://localhost:5000");
+  for (const request of result[0].requests) {
+    console.log(methodTemplate(request));
+  }
+}
+
+// Base Generators
 export const generateDefault = () => {
   const rootDirectory: string = ".";
 

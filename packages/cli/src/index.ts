@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import {extract2} from "./commands/extract";
-import {generatePostman} from "./commands/generate_rest_api";
+import {generateClientApi, generateDefault} from "./commands/generate_rest_api";
 import {Cli} from "./core/cli";
 import {version} from "./core/config";
 
@@ -18,7 +18,9 @@ Cli.program
   const inputDirectory: string = args.input;
   const outputFile: string = args.output;
 
-  generatePostman(inputDirectory, outputFile);
+  // generatePostman(inputDirectory, outputFile);
+  // generateDefault();
+  generateClientApi();
 });
 
 Cli.program
